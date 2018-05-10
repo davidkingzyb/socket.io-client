@@ -1,14 +1,13 @@
 
-# socket.io-client
+# socket.io-wx-client
 
-[![Build Status](https://secure.travis-ci.org/socketio/socket.io-client.svg?branch=master)](http://travis-ci.org/socketio/socket.io-client)
-[![Dependency Status](https://david-dm.org/socketio/socket.io-client.svg)](https://david-dm.org/socketio/socket.io-client)
-[![devDependency Status](https://david-dm.org/socketio/socket.io-client/dev-status.svg)](https://david-dm.org/socketio/socket.io-client#info=devDependencies)
-![NPM version](https://badge.fury.io/js/socket.io-client.svg)
-![Downloads](http://img.shields.io/npm/dm/socket.io-client.svg?style=flat)
-[![](http://slack.socket.io/badge.svg?)](http://slack.socket.io)
+**socket.io client for wechat app and game**
 
-[![Sauce Test Status](https://saucelabs.com/browser-matrix/socket.svg)](https://saucelabs.com/u/socket)
+2018/5/10 by DKZ
+
+fork from socket.io-client v2.1.0
+
+add engine.io-client v3.2.1
 
 ## How to use
 
