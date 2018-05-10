@@ -136,6 +136,7 @@ Polling.prototype.onData = function (data) {
       return false;
     }
 
+    debug('###1',packet);
     // otherwise bypass onData and handle the message
     self.onPacket(packet);
   };
@@ -218,7 +219,8 @@ Polling.prototype.uri = function () {
   if (false !== this.timestampRequests) {
     query[this.timestampParam] = yeast();
   }
-
+  
+  debug('####',this.supportsBinary);
   if (!this.supportsBinary && !query.sid) {
     query.b64 = 1;
   }

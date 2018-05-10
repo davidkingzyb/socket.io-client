@@ -4,15 +4,27 @@
     <title>web test</title>
 </head>
 <script type="text/javascript" src="./js/libs/socket.io.js"></script>
+<script type="text/javascript" src="./js/libs/wtf.js"></script>
 <script type="text/javascript">
+    wtf.post('http://127.0.0.1:9008/signin',{},function(resp){
+        console.log(resp);
+    })
+
     var url='http://127.0.0.1:9004/campfireio'
     var opts={}
     var testio=io(url,opts).connect();
     testio.on('fail',data=>{
         console.log('@fail',data);
     })
+    testio.on('set_info',data=>{
+        console.log('@send_info',data);
+    })
     testio.on('get_info',data=>{
         console.log('@get_info',data);
+        var info = {
+            'room_token': 'test',
+        };
+        testio.emit('send_info', info);
     })
     testio.emit('join',{'room_token':'test'})
 </script>

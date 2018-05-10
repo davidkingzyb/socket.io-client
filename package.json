@@ -28,7 +28,8 @@
     "has-binary2": "~1.0.2",
     "parseuri": "0.0.5",
     "engine.io-parser": "~2.1.1",
-    "yeast": "0.1.2"
+    "yeast": "0.1.2",
+    "ws": "~3.3.1"
   },
   "devDependencies": {
     "babel-core": "^6.24.1",

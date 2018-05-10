@@ -470,6 +470,7 @@ Socket.prototype.onPacket = function (packet) {
  */
 
 Socket.prototype.onHandshake = function (data) {
+    debug('handshake',data);
   this.emit('handshake', data);
   this.id = data.sid;
   this.transport.query.sid = data.sid;

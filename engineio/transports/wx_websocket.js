@@ -8,24 +8,6 @@ var parseqs = require('parseqs');
 var inherit = require('component-inherit');
 var yeast = require('yeast');
 var debug = require('debug')('engine.io-client:websocket');
-var BrowserWebSocket = global.WebSocket || global.MozWebSocket;
-// var NodeWebSocket;
-// if (typeof window === 'undefined') {
-//   try {
-//     NodeWebSocket = require('ws');
-//   } catch (e) { }
-// }
-
-/**
- * Get either the `WebSocket` or `MozWebSocket` globals
- * in the browser or try to resolve WebSocket-compatible
- * interface exposed by `ws` for Node-like environment.
- */
-
-var WebSocket = BrowserWebSocket;
-// if (!WebSocket && typeof window === 'undefined') {
-//   WebSocket = NodeWebSocket;
-// }
 
 /**
  * Module exports.
@@ -46,11 +28,8 @@ function WS (opts) {
     this.supportsBinary = false;
   }
   this.perMessageDeflate = opts.perMessageDeflate;
-  this.usingBrowserWebSocket = true//BrowserWebSocket && !opts.forceNode;
+  this.usingBrowserWebSocket=true
   this.protocols = opts.protocols;
-  // if (!this.usingBrowserWebSocket) {
-  //   WebSocket = NodeWebSocket;
-  // }
   Transport.call(this, opts);
 }
 
@@ -81,10 +60,6 @@ WS.prototype.supportsBinary = true;
  */
 
 WS.prototype.doOpen = function () {
-  if (!this.check()) {
-    // let probe timeout
-    return;
-  }
 
   var uri = this.uri();
   var protocols = this.protocols;
@@ -108,21 +83,25 @@ WS.prototype.doOpen = function () {
     opts.localAddress = this.localAddress;
   }
 
+  var self=this;
+  var params={
+    url:uri,
+    protocols,
+    header:opts.headers,
+    method: opts.method || 'GET',
+    success:function(res){
+        debug('connectSocket success',res)
+    },
+    fail:function(err){
+        debug('*** connectSocket fail')
+        this.emit('error',err)
+    }
+  }
+
   try {
-    this.ws = this.usingBrowserWebSocket ? (protocols ? new WebSocket(uri, protocols) : new WebSocket(uri)) : new WebSocket(uri, protocols, opts);
+    this.ws = wx.connectSocket(params);
   } catch (err) {
     return this.emit('error', err);
-  }
-
-  if (this.ws.binaryType === undefined) {
-    this.supportsBinary = false;
-  }
-
-  if (this.ws.supports && this.ws.supports.binary) {
-    this.supportsBinary = true;
-    this.ws.binaryType = 'nodebuffer';
-  } else {
-    this.ws.binaryType = 'arraybuffer';
   }
 
   this.addEventListeners();
@@ -137,18 +116,22 @@ WS.prototype.doOpen = function () {
 WS.prototype.addEventListeners = function () {
   var self = this;
 
-  this.ws.onopen = function () {
+  this.ws.onOpen(function () {
+    debug('wx onSocketOpen')
     self.onOpen();
-  };
-  this.ws.onclose = function () {
+  });
+  this.ws.onClose(function () {
+    debug('wx onSocketClose')
     self.onClose();
-  };
-  this.ws.onmessage = function (ev) {
-    self.onData(ev.data);
-  };
-  this.ws.onerror = function (e) {
+  });
+  this.ws.onMessage(function (data) {
+    debug('wx onSocketMessage ',data)
+    self.onData(data.data);
+  });
+  this.ws.onError(function (e) {
+    debug('wx onSocketError ',e)
     self.onError('websocket error', e);
-  };
+  });
 };
 
 /**
@@ -168,31 +151,18 @@ WS.prototype.write = function (packets) {
   for (var i = 0, l = total; i < l; i++) {
     (function (packet) {
       parser.encodePacket(packet, self.supportsBinary, function (data) {
-        if (!self.usingBrowserWebSocket) {
-          // always create a new object (GH-437)
-          var opts = {};
-          if (packet.options) {
-            opts.compress = packet.options.compress;
-          }
 
-          if (self.perMessageDeflate) {
-            var len = 'string' === typeof data ? global.Buffer.byteLength(data) : data.length;
-            if (len < self.perMessageDeflate.threshold) {
-              opts.compress = false;
-            }
-          }
+        var params={
+            data:data,
+            success: function(res) {
+                debug('wx.sendSocketMessage success', res)
+            },
+            fail: function(err) {
+                debug('wx.sendSocketMessage fail', err)
+            },
         }
-
-        // Sometimes the websocket has already been closed but the browser didn't
-        // have a chance of informing us about it yet, in that case send will
-        // throw an error
         try {
-          if (self.usingBrowserWebSocket) {
-            // TypeError is thrown when passing the second argument on Safari
-            self.ws.send(data);
-          } else {
-            self.ws.send(data, opts);
-          }
+            self.ws.send(params);
         } catch (e) {
           debug('websocket closed before onclose event');
         }
@@ -232,7 +202,14 @@ WS.prototype.onClose = function () {
 
 WS.prototype.doClose = function () {
   if (typeof this.ws !== 'undefined') {
-    this.ws.close();
+    this.ws.close({
+        success: function() {
+            debug('close success')
+        },
+        fail: function(err) {
+            debug('close fail', err)
+        },
+    });
   }
 };
 
@@ -274,13 +251,5 @@ WS.prototype.uri = function () {
   return schema + '://' + (ipv6 ? '[' + this.hostname + ']' : this.hostname) + port + this.path + query;
 };
 
-/**
- * Feature detection for WebSocket.
- *
- * @return {Boolean} whether this transport is available.
- * @api public
- */
 
-WS.prototype.check = function () {
-  return !!WebSocket && !('__initialize' in WebSocket && this.name === WS.prototype.name);
-};
+

@@ -2,9 +2,12 @@
  * Module dependencies
  */
 
-var XHR = require('./polling-xhr');
-var JSONP = require('./polling-jsonp');
-var websocket = require('./websocket');
+// var XHR = require('./polling-xhr');
+// var JSONP = require('./polling-jsonp');
+// var websocket = require('./websocket');
+
+var XHR = require('./wx_xhr');
+var websocket = require('./wx_websocket');
 
 /**
  * Export transports.
@@ -41,9 +44,8 @@ function polling (opts) {
 
   opts.xdomain = xd;
   opts.xscheme = xs;
-  xhr = new XMLHttpRequest(opts);
 
-  if ('open' in xhr && !opts.forceJSONP) {
+  if (!opts.forceJSONP) {
     return new XHR(opts);
   } else {
     if (!jsonp) throw new Error('JSONP disabled');
