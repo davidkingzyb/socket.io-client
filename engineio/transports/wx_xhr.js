@@ -5,7 +5,7 @@
 var Polling = require('./polling');
 var Emitter = require('component-emitter');
 var inherit = require('component-inherit');
-var debug = require('debug')('wx_xhr');
+var debug = require('debug')('eio_wx_xhr');
 
 /**
  * Module exports.
@@ -28,7 +28,6 @@ function empty () {}
  */
 
 function XHR (opts) {
-    debug('wx_xhr XHR',opts);
   Polling.call(this, opts);
   this.requestTimeout = opts.requestTimeout;
   this.extraHeaders = opts.extraHeaders;
@@ -118,7 +117,6 @@ XHR.prototype.doWrite = function (data, fn) {
  */
 
 XHR.prototype.doPoll = function () {
-  debug('xhr poll');
   var req = this.request();
   var self = this;
   req.on('data', function (data) {
@@ -214,7 +212,6 @@ Request.prototype.create = function () {
     }
   }
 
-debug('params',params);
 
   try {
     wx.request(params);

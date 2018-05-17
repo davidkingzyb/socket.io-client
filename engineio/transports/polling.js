@@ -7,7 +7,7 @@ var parseqs = require('parseqs');
 var parser = require('engine.io-parser');
 var inherit = require('component-inherit');
 var yeast = require('yeast');
-var debug = require('debug')('engine.io-client:polling');
+var debug = require('debug')('eio_polling');
 
 /**
  * Module exports.
@@ -72,7 +72,6 @@ Polling.prototype.pause = function (onPause) {
   this.readyState = 'pausing';
 
   function pause () {
-    debug('paused');
     self.readyState = 'paused';
     onPause();
   }
@@ -81,19 +80,15 @@ Polling.prototype.pause = function (onPause) {
     var total = 0;
 
     if (this.polling) {
-      debug('we are currently polling - waiting to pause');
       total++;
       this.once('pollComplete', function () {
-        debug('pre-pause polling complete');
         --total || pause();
       });
     }
 
     if (!this.writable) {
-      debug('we are currently writing - waiting to pause');
       total++;
       this.once('drain', function () {
-        debug('pre-pause writing complete');
         --total || pause();
       });
     }
@@ -109,7 +104,6 @@ Polling.prototype.pause = function (onPause) {
  */
 
 Polling.prototype.poll = function () {
-  debug('polling');
   this.polling = true;
   this.doPoll();
   this.emit('poll');
@@ -123,7 +117,6 @@ Polling.prototype.poll = function () {
 
 Polling.prototype.onData = function (data) {
   var self = this;
-  debug('polling got data %s', data);
   var callback = function (packet, index, total) {
     // if its the first message we consider the transport open
     if ('opening' === self.readyState) {
@@ -135,8 +128,6 @@ Polling.prototype.onData = function (data) {
       self.onClose();
       return false;
     }
-
-    debug('###1',packet);
     // otherwise bypass onData and handle the message
     self.onPacket(packet);
   };
@@ -168,17 +159,14 @@ Polling.prototype.doClose = function () {
   var self = this;
 
   function close () {
-    debug('writing close packet');
     self.write([{ type: 'close' }]);
   }
 
   if ('open' === this.readyState) {
-    debug('transport open - closing');
     close();
   } else {
     // in case we're trying to close while
     // handshaking is in progress (GH-164)
-    debug('transport not open - deferring close');
     this.once('open', close);
   }
 };
@@ -220,7 +208,6 @@ Polling.prototype.uri = function () {
     query[this.timestampParam] = yeast();
   }
   
-  debug('####',this.supportsBinary);
   if (!this.supportsBinary && !query.sid) {
     query.b64 = 1;
   }

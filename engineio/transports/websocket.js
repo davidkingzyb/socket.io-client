@@ -7,7 +7,7 @@ var parser = require('engine.io-parser');
 var parseqs = require('parseqs');
 var inherit = require('component-inherit');
 var yeast = require('yeast');
-var debug = require('debug')('engine.io-client:websocket');
+var debug = require('debug')('eio_websocket');
 var BrowserWebSocket = global.WebSocket || global.MozWebSocket;
 // var NodeWebSocket;
 // if (typeof window === 'undefined') {
@@ -194,7 +194,7 @@ WS.prototype.write = function (packets) {
             self.ws.send(data, opts);
           }
         } catch (e) {
-          debug('websocket closed before onclose event');
+          debug('*** websocket closed before onclose event');
         }
 
         --total || done();

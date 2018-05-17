@@ -7,7 +7,7 @@ var parser = require('engine.io-parser');
 var parseqs = require('parseqs');
 var inherit = require('component-inherit');
 var yeast = require('yeast');
-var debug = require('debug')('engine.io-client:websocket');
+var debug = require('debug')('eio_wx_websocket');
 
 /**
  * Module exports.
@@ -117,19 +117,15 @@ WS.prototype.addEventListeners = function () {
   var self = this;
 
   this.ws.onOpen(function () {
-    debug('wx onSocketOpen')
     self.onOpen();
   });
   this.ws.onClose(function () {
-    debug('wx onSocketClose')
     self.onClose();
   });
   this.ws.onMessage(function (data) {
-    debug('wx onSocketMessage ',data)
     self.onData(data.data);
   });
   this.ws.onError(function (e) {
-    debug('wx onSocketError ',e)
     self.onError('websocket error', e);
   });
 };
@@ -155,16 +151,14 @@ WS.prototype.write = function (packets) {
         var params={
             data:data,
             success: function(res) {
-                debug('wx.sendSocketMessage success', res)
             },
             fail: function(err) {
-                debug('wx.sendSocketMessage fail', err)
             },
         }
         try {
             self.ws.send(params);
         } catch (e) {
-          debug('websocket closed before onclose event');
+          debug('*** websocket closed before onclose event');
         }
 
         --total || done();
@@ -204,10 +198,8 @@ WS.prototype.doClose = function () {
   if (typeof this.ws !== 'undefined') {
     this.ws.close({
         success: function() {
-            debug('close success')
         },
         fail: function(err) {
-            debug('close fail', err)
         },
     });
   }

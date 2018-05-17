@@ -5,7 +5,7 @@
 var Polling = require('./polling');
 var Emitter = require('component-emitter');
 var inherit = require('component-inherit');
-var debug = require('debug')('engine.io-client:polling-xhr');
+var debug = require('debug')('eio_xhr');
 
 /**
  * Module exports.
@@ -117,7 +117,6 @@ XHR.prototype.doWrite = function (data, fn) {
  */
 
 XHR.prototype.doPoll = function () {
-  debug('xhr poll');
   var req = this.request();
   var self = this;
   req.on('data', function (data) {
@@ -192,7 +191,6 @@ Request.prototype.create = function () {
   var self = this;
 
   try {
-    debug('xhr open %s: %s', this.method, this.uri);
     xhr.open(this.method, this.uri, this.async);
     try {
       if (this.extraHeaders) {
@@ -258,7 +256,6 @@ Request.prototype.create = function () {
       };
     }
 
-    debug('xhr data %s', this.data);
     xhr.send(this.data);
   } catch (e) {
     // Need to defer since .create() is called directly fhrom the constructor

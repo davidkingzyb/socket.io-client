@@ -4,7 +4,7 @@
 
 var transports = require('./transports/index');
 var Emitter = require('component-emitter');
-var debug = require('debug')('engine.io-client:socket');
+var debug = require('debug')('eio_socket');
 var index = require('indexof');
 var parser = require('engine.io-parser');
 var parseuri = require('parseuri');
@@ -154,7 +154,6 @@ Socket.parser = require('engine.io-parser');
  */
 
 Socket.prototype.createTransport = function (name) {
-  debug('creating transport "%s"', name);
   var query = clone(this.query);
 
   // append engine.io protocol identifier
@@ -253,11 +252,9 @@ Socket.prototype.open = function () {
  */
 
 Socket.prototype.setTransport = function (transport) {
-  debug('setting transport %s', transport.name);
   var self = this;
 
   if (this.transport) {
-    debug('clearing existing transport %s', this.transport.name);
     this.transport.removeAllListeners();
   }
 
@@ -288,7 +285,6 @@ Socket.prototype.setTransport = function (transport) {
  */
 
 Socket.prototype.probe = function (name) {
-  debug('probing transport "%s"', name);
   var transport = this.createTransport(name, { probe: 1 });
   var failed = false;
   var self = this;
@@ -302,22 +298,18 @@ Socket.prototype.probe = function (name) {
     }
     if (failed) return;
 
-    debug('probe transport "%s" opened', name);
     transport.send([{ type: 'ping', data: 'probe' }]);
     transport.once('packet', function (msg) {
       if (failed) return;
       if ('pong' === msg.type && 'probe' === msg.data) {
-        debug('probe transport "%s" pong', name);
         self.upgrading = true;
         self.emit('upgrading', transport);
         if (!transport) return;
         Socket.priorWebsocketSuccess = 'websocket' === transport.name;
 
-        debug('pausing current transport "%s"', self.transport.name);
         self.transport.pause(function () {
           if (failed) return;
           if ('closed' === self.readyState) return;
-          debug('changing transport and sending upgrade packet');
 
           cleanup();
 
@@ -329,7 +321,6 @@ Socket.prototype.probe = function (name) {
           self.flush();
         });
       } else {
-        debug('probe transport "%s" failed', name);
         var err = new Error('probe error');
         err.transport = transport.name;
         self.emit('upgradeError', err);
@@ -356,8 +347,6 @@ Socket.prototype.probe = function (name) {
 
     freezeTransport();
 
-    debug('probe transport "%s" failed because of error: %s', name, err);
-
     self.emit('upgradeError', error);
   }
 
@@ -373,7 +362,6 @@ Socket.prototype.probe = function (name) {
   // When the socket is upgraded while we're probing
   function onupgrade (to) {
     if (transport && to.name !== transport.name) {
-      debug('"%s" works - aborting "%s"', to.name, transport.name);
       freezeTransport();
     }
   }
@@ -404,7 +392,6 @@ Socket.prototype.probe = function (name) {
  */
 
 Socket.prototype.onOpen = function () {
-  debug('socket open');
   this.readyState = 'open';
   Socket.priorWebsocketSuccess = 'websocket' === this.transport.name;
   this.emit('open');
@@ -413,7 +400,6 @@ Socket.prototype.onOpen = function () {
   // we check for `readyState` in case an `open`
   // listener already closed the socket
   if ('open' === this.readyState && this.upgrade && this.transport.pause) {
-    debug('starting upgrade probes');
     for (var i = 0, l = this.upgrades.length; i < l; i++) {
       this.probe(this.upgrades[i]);
     }
@@ -429,7 +415,6 @@ Socket.prototype.onOpen = function () {
 Socket.prototype.onPacket = function (packet) {
   if ('opening' === this.readyState || 'open' === this.readyState ||
       'closing' === this.readyState) {
-    debug('socket receive: type "%s", data "%s"', packet.type, packet.data);
 
     this.emit('packet', packet);
 
@@ -458,7 +443,7 @@ Socket.prototype.onPacket = function (packet) {
         break;
     }
   } else {
-    debug('packet received with socket readyState "%s"', this.readyState);
+    debug('packet received with socket readyState', this.readyState);
   }
 };
 
@@ -470,7 +455,6 @@ Socket.prototype.onPacket = function (packet) {
  */
 
 Socket.prototype.onHandshake = function (data) {
-    debug('handshake',data);
   this.emit('handshake', data);
   this.id = data.sid;
   this.transport.query.sid = data.sid;
@@ -513,7 +497,6 @@ Socket.prototype.setPing = function () {
   var self = this;
   clearTimeout(self.pingIntervalTimer);
   self.pingIntervalTimer = setTimeout(function () {
-    debug('writing ping packet - expecting pong within %sms', self.pingTimeout);
     self.ping();
     self.onHeartbeat(self.pingTimeout);
   }, self.pingInterval);
@@ -562,7 +545,6 @@ Socket.prototype.onDrain = function () {
 Socket.prototype.flush = function () {
   if ('closed' !== this.readyState && this.transport.writable &&
     !this.upgrading && this.writeBuffer.length) {
-    debug('flushing %d packets in socket', this.writeBuffer.length);
     this.transport.send(this.writeBuffer);
     // keep track of current length of writeBuffer
     // splice writeBuffer and callbackBuffer on `drain`
@@ -655,7 +637,6 @@ Socket.prototype.close = function () {
 
   function close () {
     self.onClose('forced close');
-    debug('socket closing - telling transport to close');
     self.transport.close();
   }
 
@@ -681,7 +662,6 @@ Socket.prototype.close = function () {
  */
 
 Socket.prototype.onError = function (err) {
-  debug('socket error %j', err);
   Socket.priorWebsocketSuccess = false;
   this.emit('error', err);
   this.onClose('transport error', err);
@@ -695,7 +675,6 @@ Socket.prototype.onError = function (err) {
 
 Socket.prototype.onClose = function (reason, desc) {
   if ('opening' === this.readyState || 'open' === this.readyState || 'closing' === this.readyState) {
-    debug('socket close with reason: "%s"', reason);
     var self = this;
 
     // clear timers
